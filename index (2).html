@@ -1,0 +1,909 @@
+<!--
+  Open Docket
+  Copyright Abijai Sree (https://github.com/<your-github-username>/open-docket)
+  Licensed under the PolyForm Noncommercial License 1.0.0.
+  See the LICENSE file in this repository, or:
+  https://polyformproject.org/licenses/noncommercial/1.0.0
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Docket — Track public comment periods before they close</title>
+<meta name="description" content="Find government rules, permits, and zoning changes open for public comment right now — and get reminded before the window closes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #f4f6f9;
+    --paper-card: #ffffff;
+    --paper-dark: #eaeef3;
+    --ink: #16212e;
+    --ink-soft: #4c596b;
+    --navy: #0b3d66;
+    --forest: #0e6b5c;
+    --brass: #0b3d66;
+    --stamp-red: #a3312a;
+    --stamp-green: #1c7a4d;
+    --stamp-navy: #0b3d66;
+    --muted: #7c8797;
+    --hairline: #dbe2ea;
+    --shadow: 0 1px 0 rgba(16,33,46,0.04), 0 6px 16px -10px rgba(16,33,46,0.28);
+    --radius: 4px;
+    --focus: #0b3d66;
+    font-size: 16px;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  ::selection{ background: var(--navy); color: #ffffff; }
+
+  a{ color: var(--navy); }
+  button{ font-family: inherit; }
+
+  :focus-visible{
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .stamp-font{ font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: 0.01em; }
+  .mono{ font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+  /* ---------- layout shell ---------- */
+  .wrap{ max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header.masthead{
+    border-bottom: 2px solid var(--navy);
+    padding: 28px 0 16px;
+    margin-bottom: 6px;
+  }
+  .masthead-row{
+    display:flex; align-items:flex-end; justify-content:space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:14px;
+  }
+  .brand-mark{
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.9rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .brand-mark span{ color: var(--navy); }
+  .tagline{
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    font-style: italic;
+    max-width: 30ch;
+  }
+  .masthead-meta{
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.7;
+  }
+
+  /* ---------- hero / most urgent case file ---------- */
+  .hero{
+    margin: 26px 0 34px;
+    background: var(--paper-card);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow);
+    position: relative;
+    padding: 26px 28px 24px;
+    overflow: hidden;
+  }
+  .hero::before{
+    content: "";
+    position:absolute; left:0; top:0; bottom:0; width: 4px;
+    background: var(--navy);
+  }
+  .hero-eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--navy);
+    margin: 0 0 8px;
+  }
+  .hero-grid{
+    display:grid; grid-template-columns: 1fr auto; gap: 24px; align-items:center;
+  }
+  .hero h1{
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 1.7rem;
+    line-height: 1.25;
+    margin: 0 0 10px;
+  }
+  .hero-meta{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    display:flex; gap:18px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .hero-summary{ color: var(--ink-soft); font-size: 0.98rem; max-width: 62ch; }
+
+  .countdown-block{
+    text-align:center;
+    border: 1px solid var(--hairline);
+    padding: 14px 26px;
+    background: var(--paper-dark);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .countdown-num{
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 2.6rem;
+    line-height: 1;
+    color: var(--navy);
+  }
+  .countdown-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .hero{ animation: settle 0.5s ease-out; }
+  }
+  @keyframes settle{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: var(--paper-dark);
+    border: 1px solid var(--hairline);
+  }
+  .controls input[type="search"], .controls select{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    padding: 9px 11px;
+    border: 1px solid var(--ink);
+    background: var(--paper-card);
+    color: var(--ink);
+    border-radius: var(--radius);
+  }
+  .controls input[type="search"]{ flex: 1 1 220px; min-width: 180px; }
+  .controls label.tab-btn{
+    display:flex; align-items:center; gap:6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .count-note{
+    margin-left:auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ---------- data source banner ---------- */
+  .source-banner{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--forest);
+    background: #e7f3ef;
+    border: 1px solid #c3ded4;
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    margin-bottom: 18px;
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;
+  }
+  .source-banner.is-example{ color: var(--ink-soft); background: var(--paper-dark); border-color: var(--hairline); }
+  .source-banner button{
+    background:none; border: 1px solid currentColor; color: inherit;
+    font-family: inherit; font-size: 0.72rem; padding: 4px 10px; cursor:pointer; border-radius: var(--radius);
+  }
+
+  /* ---------- card grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+    margin-bottom: 40px;
+  }
+
+  .card{
+    background: var(--paper-card);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: 20px 18px 16px;
+    position: relative;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .card-tab{
+    position:absolute; top:-1px; right:14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--forest);
+    color: #ffffff;
+    padding: 3px 9px;
+    border-radius: 0 0 5px 5px;
+  }
+
+  .card-top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap: 10px; }
+  .docket-id{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .stamp{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border: 1px solid;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .stamp--open{ color: var(--stamp-green); border-color: var(--stamp-green); background: rgba(28,122,77,0.08); }
+  .stamp--soon{ color: var(--stamp-red); border-color: var(--stamp-red); background: rgba(163,49,42,0.08); }
+  .stamp--closed{ color: var(--muted); border-color: var(--muted); background: rgba(124,135,151,0.08); }
+
+  .card h3{
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.08rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .card .agency{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .card p.summary{
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-footer{
+    margin-top: auto;
+    display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    border-top: 1px dashed var(--hairline);
+    padding-top: 10px;
+  }
+  .days-left{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .days-left b{ color: var(--stamp-red); }
+
+  .card-actions{ display:flex; gap: 6px; }
+  .icon-btn{
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    width: 30px; height: 30px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 0.9rem;
+    transition: transform 0.1s ease, background 0.15s ease;
+  }
+  .icon-btn:hover{ background: var(--paper-dark); }
+  .icon-btn:active{ transform: scale(0.94); }
+  .icon-btn.is-starred{ background: var(--brass); border-color: var(--brass); color: var(--paper-card); }
+
+  .read-link{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    text-decoration: none;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    white-space: nowrap;
+  }
+  .read-link:hover{ background: var(--navy); color: var(--paper-card); }
+
+  /* ---------- empty state ---------- */
+  .empty{
+    text-align:center;
+    padding: 50px 20px;
+    border: 1px dashed var(--hairline);
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  /* ---------- watchlist ---------- */
+  .watchlist{
+    background: var(--paper-dark);
+    border: 1px solid var(--hairline);
+    padding: 20px 22px;
+    margin-bottom: 40px;
+  }
+  .watchlist h2{
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0 0 4px;
+    color: var(--navy);
+  }
+  .watchlist .sub{
+    font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 14px;
+  }
+  .watchlist-row{
+    display:flex; align-items:center; justify-content:space-between; gap: 12px;
+    padding: 8px 0; border-bottom: 1px dashed var(--hairline);
+    font-size: 0.88rem; flex-wrap: wrap;
+  }
+  .watchlist-row:last-of-type{ border-bottom: none; }
+  .watchlist-actions{ display:flex; gap:14px; margin-top: 14px; flex-wrap: wrap; }
+  .btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    padding: 9px 16px;
+    border: 1px solid var(--ink);
+    background: var(--navy);
+    color: var(--paper-card);
+    cursor: pointer;
+    border-radius: var(--radius);
+  }
+  .btn.ghost{ background: transparent; color: var(--ink); }
+  .btn:hover{ filter: brightness(1.08); }
+
+  /* ---------- settings ---------- */
+  details.settings{
+    margin-bottom: 34px;
+    border: 1px solid var(--hairline);
+    background: var(--paper-card);
+  }
+  details.settings summary{
+    cursor:pointer; padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--navy);
+  }
+  .settings-body{ padding: 4px 16px 18px; font-size: 0.88rem; color: var(--ink-soft); }
+  .settings-body label{ display:block; font-family:'IBM Plex Mono', monospace; font-size:0.72rem; color: var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin: 12px 0 5px; }
+  .settings-body input[type="text"]{
+    width: 100%; max-width: 420px;
+    padding: 8px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+    border: 1px solid var(--ink); border-radius: var(--radius); background: var(--paper);
+  }
+  .settings-body .row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+
+  footer{
+    border-top: 1px solid var(--hairline);
+    padding: 22px 0 40px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    display:flex; justify-content:space-between; gap: 14px; flex-wrap: wrap;
+  }
+  footer a{ color: var(--forest); }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;
+  }
+
+  @media (max-width: 640px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .countdown-block{ justify-self:start; transform: none; }
+    .masthead-row{ flex-direction:column; align-items:flex-start; }
+    .masthead-meta{ text-align:left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-row">
+      <div class="brand">
+        <div class="brand-mark">OPEN <span>DOCKET</span></div>
+        <p class="tagline">Public comment windows, tracked before they quietly close.</p>
+      </div>
+      <div class="masthead-meta" id="masthead-meta">
+        VOL. — · <span id="today-date"></span>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero" id="hero" aria-live="polite"></section>
+
+  <details class="settings">
+    <summary>Connect live federal data (optional)</summary>
+    <div class="settings-body">
+      <p>By default this page shows illustrative example dockets so you can see how it works offline. To pull live, real dockets from Regulations.gov, get a free key at
+        <a href="https://open.gsa.gov/api/regulationsgov/" target="_blank" rel="noopener">open.gsa.gov/api/regulationsgov</a>
+        and paste it below. The key is stored only in your browser — never sent anywhere but Regulations.gov.</p>
+      <label for="api-key-input">Regulations.gov API key</label>
+      <input type="text" id="api-key-input" placeholder="e.g. DEMO_KEY or your own key" autocomplete="off">
+      <div class="row">
+        <button class="btn" id="connect-btn">Connect &amp; fetch live dockets</button>
+        <button class="btn ghost" id="disconnect-btn">Use example dockets instead</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="source-banner" id="source-banner"></div>
+
+  <div class="controls">
+    <input type="search" id="search-input" placeholder="Search by keyword — &quot;zoning&quot;, &quot;water&quot;, &quot;utility rate&quot;…" aria-label="Search dockets">
+    <select id="agency-filter" aria-label="Filter by agency">
+      <option value="">All agencies</option>
+    </select>
+    <select id="sort-select" aria-label="Sort dockets">
+      <option value="soonest">Closing soonest</option>
+      <option value="newest">Newest posted</option>
+    </select>
+    <label class="tab-btn"><input type="checkbox" id="watchlist-only"> Watchlist only</label>
+    <span class="count-note" id="result-count"></span>
+  </div>
+
+  <section class="watchlist" id="watchlist-section" hidden>
+    <h2>Your watchlist</h2>
+    <p class="sub">Starred dockets live here. Export the deadlines to your calendar so you don't have to remember to check back.</p>
+    <div id="watchlist-rows"></div>
+    <div class="watchlist-actions">
+      <button class="btn" id="export-ics-btn">Download calendar reminders (.ics)</button>
+      <button class="btn ghost" id="notify-btn">Enable browser alerts</button>
+    </div>
+  </section>
+
+  <div class="grid" id="card-grid"></div>
+  <div class="empty" id="empty-state" hidden>No dockets match your filters. Try a broader keyword, or clear the watchlist-only checkbox.</div>
+
+  <footer>
+    <span>Open Docket is a static, client-side tool — no server, no tracking. Data via <a href="https://www.regulations.gov" target="_blank" rel="noopener">Regulations.gov</a> or bundled examples.</span>
+    <span>Built to make one legally-required window a little harder to miss.</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- state ----------
+  const LS_WATCHLIST = "opendocket_watchlist_v1";
+  const LS_API_KEY = "opendocket_api_key_v1";
+  let allDocs = [];
+  let watchlist = new Set(JSON.parse(localStorage.getItem(LS_WATCHLIST) || "[]"));
+  let usingLiveData = false;
+
+  const $ = (sel) => document.querySelector(sel);
+  const grid = $("#card-grid");
+  const hero = $("#hero");
+  const banner = $("#source-banner");
+  const emptyState = $("#empty-state");
+  const watchlistSection = $("#watchlist-section");
+  const watchlistRows = $("#watchlist-rows");
+  const resultCount = $("#result-count");
+  const agencyFilter = $("#agency-filter");
+
+  document.getElementById("today-date").textContent = new Date().toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+
+  // ---------- example data (offsets are relative to "today" so it always feels live) ----------
+  function daysFromNow(n){
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+
+  function buildExampleData(){
+    const raw = [
+      {
+        title: "Proposed Rule: Updated Lead and Copper Water Testing Requirements",
+        agency: "Environmental Protection Agency",
+        topic: "Water & Environment",
+        docketId: "EPA-EX-2026-0142",
+        summary: "Revises how municipal water systems must sample and report lead levels in older housing stock, with new disclosure timelines for utilities.",
+        closeOffset: 4, openOffset: -26,
+      },
+      {
+        title: "Notice of Proposed Rezoning: Riverside Industrial-to-Mixed-Use Corridor",
+        agency: "City Planning Commission",
+        topic: "Zoning & Land Use",
+        docketId: "CPC-EX-26-0087",
+        summary: "Would rezone 40 acres along the riverside corridor from light-industrial to mixed residential/commercial use, affecting height limits and parking minimums.",
+        closeOffset: 2, openOffset: -12,
+      },
+      {
+        title: "Utility Rate Case: Requested 11% Increase in Residential Electric Rates",
+        agency: "State Public Utilities Commission",
+        topic: "Utilities & Rates",
+        docketId: "PUC-EX-2026-1190",
+        summary: "The regional electric utility has filed for a rate increase citing grid modernization costs. Public comment can be entered into the formal record before the commission rules.",
+        closeOffset: 9, openOffset: -20,
+      },
+      {
+        title: "Draft Environmental Assessment: Wetland Fill Permit for Logistics Facility",
+        agency: "Army Corps of Engineers",
+        topic: "Water & Environment",
+        docketId: "USACE-EX-2026-0311",
+        summary: "Assessment of a proposed permit to fill 3.2 acres of wetland for a distribution facility. Public comment period precedes final permitting decision.",
+        closeOffset: 21, openOffset: -9,
+      },
+      {
+        title: "Proposed Changes to School Attendance Boundary Lines, District 4",
+        agency: "Unified School District Board",
+        topic: "Education",
+        docketId: "USD-EX-26-0044",
+        summary: "Redraws elementary attendance boundaries in response to enrollment shifts; would reassign roughly 600 students starting next school year.",
+        closeOffset: 13, openOffset: -5,
+      },
+      {
+        title: "Interim Final Rule: Nutrition Labeling for Prepared Foods Sold in Transit Stations",
+        agency: "Department of Agriculture",
+        topic: "Public Health",
+        docketId: "USDA-EX-2026-0509",
+        summary: "Would require calorie and allergen labeling on prepared foods sold in transit hubs and airports, with a phased compliance timeline for small vendors.",
+        closeOffset: 30, openOffset: -3,
+      },
+      {
+        title: "Petition for Rulemaking: Noise Limits on Short-Term Construction Permits",
+        agency: "Department of Buildings",
+        topic: "Zoning & Land Use",
+        docketId: "DOB-EX-26-0761",
+        summary: "Proposes tighter decibel limits and earlier daily cutoff times for construction noise near residential blocks.",
+        closeOffset: -3, openOffset: -33,
+      },
+      {
+        title: "Proposed Fee Schedule Update: Records Request Processing Costs",
+        agency: "Office of the City Clerk",
+        topic: "Transparency & Records",
+        docketId: "CLK-EX-26-0022",
+        summary: "Would revise the fee schedule for processing public records requests, including a proposed per-page charge for requests exceeding 100 pages.",
+        closeOffset: 6, openOffset: -14,
+      },
+    ];
+    return raw.map((r, i) => ({
+      id: "ex-" + i,
+      title: r.title,
+      agency: r.agency,
+      topic: r.topic,
+      docketId: r.docketId,
+      summary: r.summary,
+      openDate: daysFromNow(r.openOffset),
+      closeDate: daysFromNow(r.closeOffset),
+      url: "https://www.regulations.gov",
+    }));
+  }
+
+  // ---------- live data ----------
+  async function fetchLiveData(apiKey){
+    const key = apiKey && apiKey.trim() ? apiKey.trim() : "DEMO_KEY";
+    const url = "https://api.regulations.gov/v4/documents?filter[openForComment]=true&sort=-postedDate&page[size]=25&api_key=" + encodeURIComponent(key);
+    const res = await fetch(url, { headers: { "X-Api-Key": key } });
+    if(!res.ok) throw new Error("Request failed: " + res.status);
+    const json = await res.json();
+    const items = (json.data || []).map(d => {
+      const a = d.attributes || {};
+      return {
+        id: d.id,
+        title: a.title || "Untitled document",
+        agency: a.agencyId || "Unknown agency",
+        topic: (a.subtype || a.documentType || "General").toString(),
+        docketId: a.docketId || d.id,
+        summary: a.summary || "No summary provided by the agency for this document.",
+        openDate: (a.postedDate || "").slice(0,10),
+        closeDate: (a.commentEndDate || "").slice(0,10),
+        url: "https://www.regulations.gov/document/" + d.id,
+      };
+    }).filter(d => d.closeDate);
+    return items;
+  }
+
+  // ---------- helpers ----------
+  function daysLeft(closeDate){
+    const ms = new Date(closeDate + "T23:59:59") - new Date();
+    return Math.ceil(ms / 86400000);
+  }
+
+  function stampFor(days){
+    if(days < 0) return { cls: "stamp--closed", label: "Closed" };
+    if(days <= 3) return { cls: "stamp--soon", label: "Closing soon" };
+    return { cls: "stamp--open", label: "Open" };
+  }
+
+  function saveWatchlist(){
+    localStorage.setItem(LS_WATCHLIST, JSON.stringify(Array.from(watchlist)));
+  }
+
+  function escapeHtml(s){
+    return (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  }
+
+  // ---------- rendering ----------
+  function populateAgencyFilter(docs){
+    const agencies = Array.from(new Set(docs.map(d => d.agency))).sort();
+    agencyFilter.innerHTML = '<option value="">All agencies</option>' +
+      agencies.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join("");
+  }
+
+  function renderHero(docs){
+    const openOnes = docs.filter(d => daysLeft(d.closeDate) >= 0).sort((a,b) => daysLeft(a.closeDate) - daysLeft(b.closeDate));
+    if(openOnes.length === 0){
+      hero.innerHTML = `<p class="hero-eyebrow">No open dockets right now</p><h1>Nothing closing imminently in this dataset.</h1><p class="hero-summary">Broaden your filters or connect live data to see current federal dockets.</p>`;
+      return;
+    }
+    const top = openOnes[0];
+    const dl = daysLeft(top.closeDate);
+    hero.innerHTML = `
+      <p class="hero-eyebrow">Closing soonest</p>
+      <div class="hero-grid">
+        <div>
+          <h1>${escapeHtml(top.title)}</h1>
+          <div class="hero-meta">
+            <span>${escapeHtml(top.agency)}</span>
+            <span class="mono">Docket ${escapeHtml(top.docketId)}</span>
+            <span>Comment window closes ${escapeHtml(top.closeDate)}</span>
+          </div>
+          <p class="hero-summary">${escapeHtml(top.summary)}</p>
+        </div>
+        <div class="countdown-block">
+          <div class="countdown-num">${dl}</div>
+          <div class="countdown-label">day${dl === 1 ? "" : "s"} left</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderWatchlist(docs){
+    const items = docs.filter(d => watchlist.has(d.id));
+    watchlistSection.hidden = items.length === 0;
+    if(items.length === 0) return;
+    watchlistRows.innerHTML = items.map(d => {
+      const dl = daysLeft(d.closeDate);
+      return `<div class="watchlist-row">
+        <span>${escapeHtml(d.title)}</span>
+        <span class="mono">${dl >= 0 ? dl + " days left" : "closed"}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function currentFilters(){
+    return {
+      q: $("#search-input").value.trim().toLowerCase(),
+      agency: agencyFilter.value,
+      sort: $("#sort-select").value,
+      watchlistOnly: $("#watchlist-only").checked,
+    };
+  }
+
+  function renderGrid(){
+    const { q, agency, sort, watchlistOnly } = currentFilters();
+    let docs = allDocs.slice();
+
+    if(q){
+      docs = docs.filter(d =>
+        d.title.toLowerCase().includes(q) ||
+        d.summary.toLowerCase().includes(q) ||
+        d.topic.toLowerCase().includes(q) ||
+        d.agency.toLowerCase().includes(q)
+      );
+    }
+    if(agency) docs = docs.filter(d => d.agency === agency);
+    if(watchlistOnly) docs = docs.filter(d => watchlist.has(d.id));
+
+    docs = docs.filter(d => daysLeft(d.closeDate) >= -1);
+
+    if(sort === "soonest"){
+      docs.sort((a,b) => daysLeft(a.closeDate) - daysLeft(b.closeDate));
+    } else {
+      docs.sort((a,b) => new Date(b.openDate) - new Date(a.openDate));
+    }
+
+    resultCount.textContent = docs.length + " docket" + (docs.length === 1 ? "" : "s") + " shown";
+    emptyState.hidden = docs.length !== 0;
+    grid.innerHTML = docs.map(cardHtml).join("");
+
+    grid.querySelectorAll("[data-star]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-star");
+        if(watchlist.has(id)) watchlist.delete(id); else watchlist.add(id);
+        saveWatchlist();
+        renderGrid();
+        renderWatchlist(allDocs);
+      });
+    });
+    grid.querySelectorAll("[data-ics]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const doc = allDocs.find(d => d.id === btn.getAttribute("data-ics"));
+        if(doc) downloadIcs([doc]);
+      });
+    });
+  }
+
+  function cardHtml(d){
+    const dl = daysLeft(d.closeDate);
+    const stamp = stampFor(dl);
+    const starred = watchlist.has(d.id);
+    return `
+      <article class="card">
+        <span class="card-tab">${escapeHtml(d.topic)}</span>
+        <div class="card-top-row">
+          <span class="docket-id mono">Docket ${escapeHtml(d.docketId)}</span>
+          <span class="stamp ${stamp.cls}">${stamp.label}</span>
+        </div>
+        <div>
+          <div class="agency">${escapeHtml(d.agency)}</div>
+          <h3>${escapeHtml(d.title)}</h3>
+        </div>
+        <p class="summary">${escapeHtml(d.summary)}</p>
+        <div class="card-footer">
+          <span class="days-left">${dl >= 0 ? `<b>${dl}</b> day${dl === 1 ? "" : "s"} left` : "Window closed"}</span>
+          <div class="card-actions">
+            <button class="icon-btn ${starred ? "is-starred" : ""}" data-star="${d.id}" aria-label="${starred ? "Remove from" : "Add to"} watchlist" title="${starred ? "Remove from watchlist" : "Add to watchlist"}">${starred ? "★" : "☆"}</button>
+            <button class="icon-btn" data-ics="${d.id}" aria-label="Add deadline to calendar" title="Add to calendar">📅</button>
+            <a class="read-link" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">Read &amp; comment →</a>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  // ---------- ICS export ----------
+  function toIcsDate(dateStr){
+    return dateStr.replace(/-/g, "") + "T170000Z";
+  }
+  function downloadIcs(docs){
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Open Docket//EN",
+    ];
+    docs.forEach(d => {
+      lines.push(
+        "BEGIN:VEVENT",
+        "UID:" + d.id + "@opendocket",
+        "DTSTAMP:" + toIcsDate(new Date().toISOString().slice(0,10)),
+        "DTSTART:" + toIcsDate(d.closeDate),
+        "SUMMARY:Comment period closes — " + d.title.replace(/\n/g, " "),
+        "DESCRIPTION:" + (d.summary || "").replace(/\n/g, " ") + " Submit at " + d.url,
+        "END:VEVENT"
+      );
+    });
+    lines.push("END:VCALENDAR");
+    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "open-docket-reminders.ics";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ---------- notifications (best-effort, tab must stay open) ----------
+  function scheduleNotifications(docs){
+    if(!("Notification" in window)) return;
+    docs.forEach(d => {
+      const dl = daysLeft(d.closeDate);
+      if(dl < 0) return;
+      const msUntilDayBefore = new Date(d.closeDate + "T09:00:00") - new Date() - 86400000;
+      if(msUntilDayBefore > 0 && msUntilDayBefore < 2147483647){
+        setTimeout(() => {
+          if(Notification.permission === "granted"){
+            new Notification("Comment window closes tomorrow", { body: d.title });
+          }
+        }, msUntilDayBefore);
+      }
+    });
+  }
+
+  // ---------- data source banner ----------
+  function renderBanner(){
+    banner.classList.toggle("is-example", !usingLiveData);
+    banner.innerHTML = usingLiveData
+      ? `<span>● Connected — showing live dockets from Regulations.gov.</span><button id="switch-example">Switch to examples</button>`
+      : `<span>○ Showing illustrative example dockets, not live data. Open "Connect live federal data" above to pull real ones.</span>`;
+    const btn = document.getElementById("switch-example");
+    if(btn) btn.addEventListener("click", () => loadExample());
+  }
+
+  // ---------- load paths ----------
+  function loadExample(){
+    usingLiveData = false;
+    allDocs = buildExampleData();
+    afterLoad();
+  }
+
+  async function loadLive(apiKey){
+    try{
+      const items = await fetchLiveData(apiKey);
+      if(items.length === 0) throw new Error("No open documents returned.");
+      usingLiveData = true;
+      allDocs = items;
+      afterLoad();
+    } catch(err){
+      console.error(err);
+      banner.classList.remove("is-example");
+      banner.innerHTML = `<span>⚠ Couldn't reach Regulations.gov from this browser (network, CORS, or key issue: ${escapeHtml(err.message)}). Showing example dockets instead.</span>`;
+      loadExample();
+    }
+  }
+
+  function afterLoad(){
+    populateAgencyFilter(allDocs);
+    renderHero(allDocs);
+    renderBanner();
+    renderGrid();
+    renderWatchlist(allDocs);
+  }
+
+  // ---------- events ----------
+  ["#search-input","#agency-filter","#sort-select","#watchlist-only"].forEach(sel => {
+    $(sel).addEventListener("input", renderGrid);
+    $(sel).addEventListener("change", renderGrid);
+  });
+
+  $("#connect-btn").addEventListener("click", () => {
+    const key = $("#api-key-input").value.trim();
+    localStorage.setItem(LS_API_KEY, key);
+    loadLive(key);
+  });
+  $("#disconnect-btn").addEventListener("click", () => loadExample());
+
+  $("#export-ics-btn").addEventListener("click", () => {
+    const items = allDocs.filter(d => watchlist.has(d.id) && daysLeft(d.closeDate) >= 0);
+    if(items.length === 0){ alert("Star at least one open docket first."); return; }
+    downloadIcs(items);
+  });
+
+  $("#notify-btn").addEventListener("click", async () => {
+    if(!("Notification" in window)){ alert("This browser doesn't support notifications."); return; }
+    const perm = await Notification.requestPermission();
+    if(perm === "granted"){
+      scheduleNotifications(allDocs.filter(d => watchlist.has(d.id)));
+      alert("Alerts enabled for your watchlist — keep this tab open for reminders to fire, or use the calendar export for a reminder that works even when it's closed.");
+    }
+  });
+
+  // ---------- init ----------
+  const savedKey = localStorage.getItem(LS_API_KEY);
+  loadExample();
+  if(savedKey){
+    $("#api-key-input").value = savedKey;
+  }
+})();
+</script>
+</body>
+</html>
